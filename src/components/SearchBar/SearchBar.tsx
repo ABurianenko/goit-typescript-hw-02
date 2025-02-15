@@ -13,13 +13,14 @@ const SearchBar = ({ onSubmit }:SearchBarPrors) => {
     e.preventDefault();
 
     if (query.trim() === '') {
-      customToast('warn', 'Oops... Enter something');
+      customToast({type: 'warn', message: 'Oops... Enter something'});
       return;
     }
 
     onSubmit(query);
     setQuery('');
   };
+
   return (
     <header className={s.header}>
       <form onSubmit={handleSubmit} className={s.searchForm}>
