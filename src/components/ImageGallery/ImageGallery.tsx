@@ -8,11 +8,12 @@ interface ImageGalleryProps {
 }
 
 const ImageGallery = forwardRef<HTMLUListElement, ImageGalleryProps>(({ images, onImageClick }, ref) => {
-  console.log('images: ', images);
+  console.log('ImageGallery rendered, images count:', images.length);
+  
   return (
     <ul className="gallery" ref={ref}>
       {images.map(image => (
-        <li key={image.id} className="thumb" onClick={() => onImageClick(image)}>
+        <li key={`${image.id}-${image.urls.small}`} className="thumb" onClick={() => onImageClick(image)}>
           <ImageCard info={image} />
         </li>
       ))}

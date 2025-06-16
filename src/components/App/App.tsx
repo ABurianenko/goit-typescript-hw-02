@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Toaster } from 'react-hot-toast';
 import FetchImages from '../../services/API';
 import SearchBar from '../SearchBar/SearchBar.jsx';
@@ -20,6 +20,7 @@ const App = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
   const galleryRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -29,16 +30,16 @@ const App = () => {
       try {
         setIsLoading(true);
         const res = await FetchImages(query, page);
-        
+
         if (res.results.length === 0) {
           setIsShowButton(false);
-          customToast({type: 'warn', message: 'Sorry, there are no images matching your search'});
+          customToast({ type: 'warn', message: 'Sorry, there are no images matching your search' });
           setIsLoading(false);
           return;
         }
 
         setImages(prev => [...prev, ...res.results]);
-        setIsShowButton(page < Math.ceil(res.total / 12) ? true : false);
+        setIsShowButton(page < Math.ceil(res.total / 12));
         setIsLoading(false);
       } catch (_) {
         setError('Something went wrong! Please try again later.');
@@ -66,16 +67,34 @@ const App = () => {
     setIsModalOpen(false);
   };
 
-  useLayoutEffect(() => {
-    if (galleryRef.current && images.length > 0) {
-      const { height: cardHeight } = galleryRef.current.firstElementChild!.getBoundingClientRect();
+  const handleLoadMoreClick = () => {
+    setScrollTargetIndex(images.length); 
+    setPage(prev => prev + 1);
+  };
 
-      window.scrollBy({
-        top: cardHeight * 1,
-        behavior: 'smooth',
+  useEffect(() => {
+    if (scrollTargetIndex === null || !galleryRef.current) return;
+  
+    const timeoutId = setTimeout(() => {
+      requestAnimationFrame(() => {
+        const galleryItems = galleryRef.current!.querySelectorAll('.thumb');
+        const targetItem = galleryItems[scrollTargetIndex];
+  
+        console.log('Scroll to index:', scrollTargetIndex);
+        console.log('galleryItems.length:', galleryItems.length);
+  
+        if (targetItem instanceof HTMLElement) {
+          targetItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+  
+        setScrollTargetIndex(null);
       });
-    }
+    }, 100);
+  
+    return () => clearTimeout(timeoutId);
   }, [images]);
+  
+  
 
   return (
     <>
@@ -91,7 +110,7 @@ const App = () => {
         )}
       </div>
       {isLoading && <Loader />}
-      {isShowButton && <LoadMoreBtn onClick={() => setPage(page => page + 1)} />}
+      {isShowButton && <LoadMoreBtn onClick={handleLoadMoreClick} />}
       <ImageModal isOpen={isModalOpen} onClose={closeModal} image={selectedImage} />
     </>
   );
